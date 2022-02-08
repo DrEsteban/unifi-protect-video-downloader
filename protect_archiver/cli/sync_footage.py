@@ -5,7 +5,7 @@ from protect_archiver.cli.base import cli
 from protect_archiver.sync import sync
 
 
-@cli.command("sync", help="Synchronize your UniFi Protect footage to a local destination")
+@cli.command("sync", help="Synchronize all UniFi Protect footage to a local destination")
 @click.argument("dest", type=click.Path(exists=True, writable=True, resolve_path=True))
 @click.option(
     "--address",

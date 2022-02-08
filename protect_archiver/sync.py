@@ -90,6 +90,11 @@ class ProtectSync:
             f"Synchronizing video files from 'https://{self.client.address}:{self.client.port}"
         )
 
+        if self.only_events:
+            logging.info("Syncing events...")
+        else:
+            logging.info("Syncing all footage...")
+
         if not ignore_state:
             state = self.readstate()
         else:
@@ -106,7 +111,18 @@ class ProtectSync:
                 )
                 end = datetime.now().replace(minute=0, second=0, microsecond=0)
                 for interval_start, interval_end in calculate_intervals(start, end):
-                    Downloader.download_footage(self.client, interval_start, interval_end, camera)
+                    if self.only_events:
+                        motion_event_list = self.client.get_motion_event_list(
+                            interval_start, interval_end, [camera]
+                        )
+                        for motion_event in motion_event_list:
+                            Downloader.download_motion_event(
+                                self.client, motion_event, camera, download_motion_heatmaps=True
+                            )
+                    else:
+                        Downloader.download_footage(
+                            self.client, interval_start, interval_end, camera
+                        )
                     state["cameras"][camera.id] = {
                         "last": interval_end,
                         "name": camera.name,
