@@ -16,6 +16,6 @@ class Config:
     IGNORE_FAILED_DOWNLOADS: bool = False
     DOWNLOAD_WAIT: int = 0
     DOWNLOAD_TIMEOUT: float = (
-        60.0  # aka read_timeout - time to wait until a socket read response happens
+        180.0  # aka read_timeout - time to wait until a socket read response happens
     )
     MAX_RETRIES: int = 3
