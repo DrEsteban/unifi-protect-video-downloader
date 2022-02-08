@@ -1,6 +1,8 @@
 import json
 import logging
 
+import click
+
 from datetime import datetime
 from os import path
 
@@ -10,12 +12,64 @@ from .client import ProtectClient
 from .downloader import Downloader
 from .utils import calculate_intervals
 from .utils import json_encode
+from .utils import print_download_stats
+
+
+def sync(
+    dest,
+    address,
+    port,
+    not_unifi_os,
+    username,
+    password,
+    verify_ssl,
+    statefile,
+    ignore_state,
+    ignore_failed_downloads,
+    cameras,
+    only_events,
+):
+    # normalize path to destination directory and check if it exists
+    dest = path.abspath(dest)
+    if not path.isdir(dest):
+        click.echo(f"Video file destination directory '{dest} is invalid or does not exist!")
+        exit(1)
+
+    client = ProtectClient(
+        address=address,
+        port=port,
+        not_unifi_os=not_unifi_os,
+        username=username,
+        password=password,
+        verify_ssl=verify_ssl,
+        destination_path=dest,
+        ignore_failed_downloads=ignore_failed_downloads,
+        use_subfolders=True,
+    )
+
+    # get camera list
+    print("Getting camera list")
+    camera_list = client.get_camera_list()
+
+    if cameras != "all":
+        camera_ids = set(cameras.split(","))
+        camera_list = [c for c in camera_list if c.id in camera_ids]
+
+    process = ProtectSync(
+        client=client, destination_path=dest, statefile=statefile, only_events=only_events
+    )
+    process.run(camera_list, ignore_state=ignore_state)
+
+    print_download_stats(client)
 
 
 class ProtectSync:
-    def __init__(self, client: ProtectClient, destination_path: str, statefile: str):
+    def __init__(
+        self, client: ProtectClient, destination_path: str, statefile: str, only_events: bool
+    ):
         self.client = client
         self.statefile = path.abspath(path.join(destination_path, statefile))
+        self.only_events = only_events
 
     def readstate(self) -> dict:
         if path.isfile(self.statefile):

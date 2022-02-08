@@ -1,12 +1,8 @@
-from os import path
-
 import click
 
-from protect_archiver.cli.base import cli
-from protect_archiver.client import ProtectClient
 from protect_archiver.config import Config
-from protect_archiver.sync import ProtectSync
-from protect_archiver.utils import print_download_stats
+from protect_archiver.cli.base import cli
+from protect_archiver.sync import sync
 
 
 @cli.command("sync", help="Synchronize your UniFi Protect footage to a local destination")
@@ -79,7 +75,7 @@ from protect_archiver.utils import print_download_stats
         "Use '--cameras=all' to download footage of all available cameras."
     ),
 )
-def sync(
+def sync_footage(
     dest,
     address,
     port,
@@ -92,33 +88,17 @@ def sync(
     ignore_failed_downloads,
     cameras,
 ):
-    # normalize path to destination directory and check if it exists
-    dest = path.abspath(dest)
-    if not path.isdir(dest):
-        click.echo(f"Video file destination directory '{dest} is invalid or does not exist!")
-        exit(1)
-
-    client = ProtectClient(
-        address=address,
-        port=port,
-        not_unifi_os=not_unifi_os,
-        username=username,
-        password=password,
-        verify_ssl=verify_ssl,
-        destination_path=dest,
-        ignore_failed_downloads=ignore_failed_downloads,
-        use_subfolders=True,
+    sync(
+        dest,
+        address,
+        port,
+        not_unifi_os,
+        username,
+        password,
+        verify_ssl,
+        statefile,
+        ignore_state,
+        ignore_failed_downloads,
+        cameras,
+        only_events=False,
     )
-
-    # get camera list
-    print("Getting camera list")
-    camera_list = client.get_camera_list()
-
-    if cameras != "all":
-        camera_ids = set(cameras.split(","))
-        camera_list = [c for c in camera_list if c.id in camera_ids]
-
-    process = ProtectSync(client=client, destination_path=dest, statefile=statefile)
-    process.run(camera_list, ignore_state=ignore_state)
-
-    print_download_stats(client)
