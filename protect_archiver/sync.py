@@ -117,7 +117,7 @@ class ProtectSync:
                         )
                         for motion_event in motion_event_list:
                             Downloader.download_motion_event(
-                                self.client, motion_event, camera, download_motion_heatmaps=True
+                                self.client, motion_event, camera, download_motion_heatmaps=False
                             )
                     else:
                         Downloader.download_footage(
