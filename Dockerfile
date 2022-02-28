@@ -3,9 +3,9 @@ FROM python:3 AS build
 RUN mkdir /build
 WORKDIR /build
 
-COPY . /build/
-
 RUN pip install -U poetry
+
+COPY . /build/
 
 RUN poetry build -f wheel --no-ansi --no-interaction
 
